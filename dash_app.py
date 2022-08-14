@@ -6,10 +6,16 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 
 
-def Header(name, app):
-    title = html.H2(name, style={"margin-top": 5})
+navbar = dbc.NavbarSimple(
+    children=[
+        dbc.NavItem(dbc.NavLink("Statistics", href="/statistics")),
 
-    return dbc.Row([dbc.Col(title, md=8)])
+    ],
+    brand="Hydroponic",
+    brand_href="/",
+    color="#008080",
+    dark=True,
+)
 
 
 def add_editable_box(
@@ -27,9 +33,7 @@ def add_editable_box(
         name=name,
     )
 
-
-# Start app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.UNITED])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
 controls = [
@@ -44,29 +48,15 @@ video = dbc.Card(
     [
         dbc.CardBody(
             dash_player.DashPlayer(
-                id="video", width="auto", height="480px", controls=True
-            )
+                id="video", width="auto", height="768px", controls=True
+            ), className = 'align-self-center'
         )
     ]
 )
-
-graph_detection = dbc.Card(
-    [
-        dbc.CardBody(
-            dcc.Graph(
-                id="graph-detection",
-                config={"modeBarButtonsToAdd": ["drawrect"]},
-                style={"height": "calc(50vh - 100px)"},
-            )
-        )
-    ]
-)
-
 
 app.layout = dbc.Container(
     [
-        Header("Hydroponic", app),
-        html.Hr(),
+        navbar,
         dbc.Row(
             [
                 dbc.Col(
@@ -86,7 +76,7 @@ app.layout = dbc.Container(
 
 @app.callback(Output("video", "url"), [Input("scene", "value")])
 def update_scene(i):
-    return app.get_asset_url("https://www.youtube.com/watch?v=i7KXycA6VGo")
+    return "https://processed-videos-bucket.s3.eu-central-1.amazonaws.com/20220729_141520.mp4"
 
 
 if __name__ == "__main__":
