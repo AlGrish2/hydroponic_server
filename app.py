@@ -1,42 +1,95 @@
-from fastapi import FastAPI
-from fastapi.encoders import jsonable_encoder
-from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
+import dash
+import dash_player
+import dash_bootstrap_components as dbc
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Input, Output
+from pony.flask import Pony
+from flask import request
 
-from models import RecognitionResultsSchema, SensorsSchema
+from database import create_record, get_timestamps, get_video_url
 
-from database import put_sensors_data, put_recognitions_data
 
-app = FastAPI()
+navbar = dbc.NavbarSimple(
+    children=[
+        dbc.NavItem(dbc.NavLink("Statistics", href="/statistics")),
 
-origins = [
-    "http://localhost",
-    "http://localhost:8080"
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    ],
+    brand="Hydroponic",
+    brand_href="/",
+    color="#008080",
+    dark=True,
 )
 
 
-@app.get("/")
-async def healthcheck():
-    return "I am alive!"
+def add_editable_box(
+    fig, x0, y0, x1, y1, name=None, color=None, opacity=1, group=None, text=None
+):
+    fig.add_shape(
+        editable=True,
+        x0=x0,
+        y0=y0,
+        x1=x1,
+        y1=y1,
+        line_color=color,
+        opacity=opacity,
+        line_width=3,
+        name=name,
+    )
+
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
+
+options = [{"label": i.strftime("%Y/%m/%d, %H:%M:%S"), "value": i.timestamp()} for i in get_timestamps()]
+controls = [
+    dbc.Select(
+        id="scene",
+        options=options,
+        value=options[0]
+    ),
+]
+
+video = dbc.Card(
+    [
+        dbc.CardBody(
+            dash_player.DashPlayer(
+                id="video", width="auto", height="768px", controls=True
+            ), className = 'align-self-center'
+        )
+    ]
+)
+
+app.layout = dbc.Container(
+    [
+        navbar,
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        video,
+                        html.Br(),
+                        dbc.Card(dbc.Row([dbc.Col(c) for c in controls]), body=True),
+                    ],
+                    md=7,
+                ),
+            ]
+        ),
+    ],
+    fluid=True,
+)
 
 
-@app.post("/add_recognitions")
-async def add_recognitions(recognitions: RecognitionResultsSchema):
-    data = jsonable_encoder(recognitions)
-    # await put_recognitions_data(data)
-    return "Success"
+@app.callback(Output("video", "url"), [Input("scene", "value")])
+def update_scene(i):
+    return get_video_url(datetime.fromtimestamp(i['value']))
 
 
-@app.post("/add_sensors_data")
-async def add_sensors_data(sensors_data: SensorsSchema):
-    print(sensors_data)
-    data = jsonable_encoder(sensors_data)
-    await put_sensors_data(data)
-    return "Success"
+@server.route('/post_record', methods=['POST'])
+def post_record():
+    create_record(request.get_json(force=True))
+    return 'ok'
+
+if __name__ == "__main__":
+    Pony(server)
+    app.run_server(debug=False)

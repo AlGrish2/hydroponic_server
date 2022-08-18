@@ -1,7 +1,5 @@
-pydantic
-fastapi
-uvicorn
-motor
 dash
 dash-player
 dash-bootstrap-components
+pony
+requests

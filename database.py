@@ -1,27 +1,30 @@
-import os
-from enum import Enum
-import motor.motor_asyncio
-from bson.objectid import ObjectId
+from pony.orm import *
+from datetime import datetime
 
-mongo_host = os.environ["MONGO_HOST"]
-MONGO_DETAILS = f"mongodb://admin:admin@{mongo_host}:27017"
+db = Database()
 
-client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DETAILS)
+class Record(db.Entity):
+    tower_id = Required(int)
+    video_url = Required(str)
+    timestamp = Required(datetime)
 
-database = client.data
+db.bind(provider='sqlite', filename='database.sqlite', create_db=True)
+db.generate_mapping(create_tables=True)
 
-recognitions_collection = database.get_collection("recognitions")
-sensors_data_collection = database.get_collection("sensors")
+@db_session
+def create_record(record):
+    Record(tower_id=record['tower_id'], video_url=record['video_url'], timestamp=datetime.fromtimestamp(record['timestamp']))
 
-
-async def put_recognitions_data(rec_data):
-    await recognitions_collection.insert_one(rec_data)
-
-
-async def put_sensors_data(sensors_data):
-    await sensors_data_collection.insert_one(sensors_data)
+@db_session
+def get_towers():
+    return select(rec.tower_id for rec in Record).distinct()[:]
 
 
-if __name__ == "__main__":
-    put_recognitions_data({"test": "data"})
-    
+@db_session
+def get_timestamps():
+    return list(sorted(select(rec.timestamp for rec in Record)[:], reverse=True))
+
+
+@db_session
+def get_video_url(timestamp):
+    return select(rec.video_url for rec in Record if rec.timestamp == timestamp).first()
