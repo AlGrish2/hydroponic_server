@@ -40,6 +40,7 @@ def add_editable_box(
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
+Pony(server)
 
 options = [{"label": i.strftime("%Y/%m/%d, %H:%M:%S"), "value": i.timestamp()} for i in get_timestamps()]
 controls = [
@@ -91,5 +92,4 @@ def post_record():
     return 'ok'
 
 if __name__ == "__main__":
-    Pony(server)
     app.run_server(debug=False)
