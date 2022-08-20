@@ -38,6 +38,7 @@ def create_main_page():
                             dbc.Card(dbc.Row([dbc.Col(c) for c in controls]), body=True),
                             html.Br(),
                             video,
+                            html.Br(),
                         ],
                         md=6,
                     ),
