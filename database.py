@@ -5,7 +5,8 @@ db = Database()
 
 class Record(db.Entity):
     tower_id = Required(int)
-    video_url = Required(str)
+    raw_video_url = Required(str)
+    processed_video_url = Required(str)
     timestamp = Required(datetime)
 
 db.bind(provider='sqlite', filename='database.sqlite', create_db=True)
@@ -13,7 +14,12 @@ db.generate_mapping(create_tables=True)
 
 @db_session
 def create_record(record):
-    Record(tower_id=record['tower_id'], video_url=record['video_url'], timestamp=datetime.fromtimestamp(record['timestamp']))
+    Record(
+        tower_id=record['tower_id'], 
+        raw_video_url=record['raw_video_url'], 
+        processed_video_url=record['processed_video_url'], 
+        timestamp=datetime.fromtimestamp(record['timestamp'])
+    )
 
 @db_session
 def get_towers():
@@ -27,4 +33,4 @@ def get_timestamps(tower_id):
 
 @db_session
 def get_video_url(timestamp):
-    return select(rec.video_url for rec in Record if rec.timestamp == timestamp).first()
+    return select(rec.processed_video_url for rec in Record if rec.timestamp == timestamp).first()

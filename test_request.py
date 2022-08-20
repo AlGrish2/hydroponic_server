@@ -3,7 +3,8 @@ import requests
 
 data = dict(
     tower_id=0,
-    video_url="https://processed-videos-bucket.s3.eu-central-1.amazonaws.com/20220729_141520.mp4",
+    raw_video_url="https://processed-videos-bucket.s3.eu-central-1.amazonaws.com/20220729_141520.mp4",
+    processed_video_url="https://processed-videos-bucket.s3.eu-central-1.amazonaws.com/20220729_141520.mp4",
     timestamp=datetime.now().timestamp()
 )
 

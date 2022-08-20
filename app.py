@@ -13,7 +13,7 @@ tower_ids = [{"label": f"Tower: {i}", "value": i} for i in get_towers()]
 tower_select = dbc.Select(
     id="tower_id",
     options=tower_ids,
-    value=tower_ids[0]
+    value=tower_ids[0] if len(tower_ids) else {"label": f"Tower: None", "value": -1}
 ),
 
 navbar = dbc.NavbarSimple(
@@ -55,7 +55,7 @@ controls = [
     dbc.Select(
         id="scene",
         options=options,
-        value=options[0]
+        value=options[0] if len(options) else {"label": datetime(year=1970, month=1, day=1).strftime("%Y/%m/%d, %H:%M:%S"), "value": 0}
     ),
 ]
 
