@@ -36,7 +36,8 @@ def create_layout():
         [
             navbar,
             html.Br(),
-            dash.page_container
+            dash.page_container,
+            html.Br(),
         ],
         fluid=True,
     )
