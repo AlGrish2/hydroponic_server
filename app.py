@@ -2,19 +2,24 @@ from datetime import datetime
 import dash
 import dash_player
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 from pony.flask import Pony
 from flask import request
 
-from database import create_record, get_timestamps, get_video_url
+from database import create_record, get_timestamps, get_towers, get_video_url
 
+tower_ids = [{"label": f"Tower: {i}", "value": i} for i in get_towers()]
+tower_select = dbc.Select(
+    id="tower_id",
+    options=tower_ids,
+    value=tower_ids[0]
+),
 
 navbar = dbc.NavbarSimple(
     children=[
         dbc.NavItem(dbc.NavLink("Statistics", href="/statistics")),
-
+        dbc.NavItem(tower_select),
     ],
     brand="Hydroponic",
     brand_href="/",
@@ -42,7 +47,10 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 Pony(server)
 
-options = [{"label": i.strftime("%Y/%m/%d, %H:%M:%S"), "value": i.timestamp()} for i in get_timestamps()]
+options = [
+    {"label": i.strftime("%Y/%m/%d, %H:%M:%S"), "value": i.timestamp()} 
+    for i in get_timestamps(tower_select[0].value['value'])
+]
 controls = [
     dbc.Select(
         id="scene",
@@ -80,10 +88,25 @@ app.layout = dbc.Container(
     fluid=True,
 )
 
-
 @app.callback(Output("video", "url"), [Input("scene", "value")])
 def update_scene(i):
-    return get_video_url(datetime.fromtimestamp(i['value']))
+    i = float(i) if type(i) is str else i['value']
+    return get_video_url(datetime.fromtimestamp(i))
+
+@app.callback(Output("scene", "value"), [Input("scene", "options")])
+def update_scene_value(i):
+    return i[0]
+
+
+@app.callback(Output("scene", "options"), [Input("tower_id", "value")])
+def update_tower(i):
+    i = i if type(i) is str else i['value']
+    i = int(i)
+    options = [
+        {"label": timestamp.strftime("%Y/%m/%d, %H:%M:%S"), "value": timestamp.timestamp()} 
+        for timestamp in get_timestamps(i)
+    ]
+    return options
 
 
 @server.route('/post_record', methods=['POST'])
@@ -92,4 +115,4 @@ def post_record():
     return 'ok'
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)

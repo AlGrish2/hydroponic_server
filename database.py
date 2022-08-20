@@ -21,8 +21,8 @@ def get_towers():
 
 
 @db_session
-def get_timestamps():
-    return list(sorted(select(rec.timestamp for rec in Record)[:], reverse=True))
+def get_timestamps(tower_id):
+    return list(sorted(select(rec.timestamp for rec in Record if rec.tower_id == tower_id)[:], reverse=True))
 
 
 @db_session
