@@ -1,15 +1,20 @@
 from datetime import datetime
 import dash
-import dash_player
 import dash_bootstrap_components as dbc
-import dash_html_components as html
+from dash import html
 from dash.dependencies import Input, Output
+import plotly.express as px
 from pony.flask import Pony
 from flask import request
 
-from database import create_record, get_timestamps, get_towers, get_video_url
+from database import create_record, get_timestamps, get_video_url, get_towers
 
-def create_main_page():
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], use_pages=True)
+server = app.server
+Pony(server)
+
+
+def create_layout():
     tower_ids = [{"label": f"Tower: {i}", "value": i} for i in get_towers()]
     tower_select = dbc.Select(
         id="tower_id",
@@ -27,70 +32,28 @@ def create_main_page():
         color="#008080",
         dark=True,
     )
-
-    options = [
-        {"label": i.strftime("%Y/%m/%d, %H:%M:%S"), "value": i.timestamp()} 
-        for i in get_timestamps(tower_select[0].value['value'])
-    ]
-    controls = [
-        dbc.Select(
-            id="scene",
-            options=options,
-            value=options[0] if len(options) else {"label": datetime(year=1970, month=1, day=1).strftime("%Y/%m/%d, %H:%M:%S"), "value": 0}
-        ),
-    ]
-
-    video = dbc.Card(
-        [
-            dbc.CardBody(
-                dash_player.DashPlayer(
-                    id="video", width="auto", height="768px", controls=True
-                ), className = 'align-self-center'
-            )
-        ]
-    )
-
     page = dbc.Container(
         [
             navbar,
-            dbc.Row(
-                [
-                    dbc.Col(
-                        [
-                            video,
-                            html.Br(),
-                            dbc.Card(dbc.Row([dbc.Col(c) for c in controls]), body=True),
-                        ],
-                        md=7,
-                    ),
-                ]
-            ),
+            html.Br(),
+            dash.page_container
         ],
         fluid=True,
     )
+    return page
 
-    return page 
+app.layout = create_layout()
 
-
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-server = app.server
-Pony(server)
-
-
-
-app.layout = create_main_page()
-
-@app.callback(Output("video", "url"), [Input("scene", "value")])
+@app.callback(Output("video", "url"), Input("scene", "value"))
 def update_scene(i):
     i = float(i) if type(i) is str else i['value']
     return get_video_url(datetime.fromtimestamp(i))
 
-@app.callback(Output("scene", "value"), [Input("scene", "options")])
+@app.callback(Output("scene", "value"), Input("scene", "options"))
 def update_scene_value(i):
     return i[0]
 
-
-@app.callback(Output("scene", "options"), [Input("tower_id", "value")])
+@app.callback(Output("scene", "options"), Input("tower_id", "value"))
 def update_tower(i):
     i = i if type(i) is str else i['value']
     i = int(i)
@@ -99,6 +62,17 @@ def update_tower(i):
         for timestamp in get_timestamps(i)
     ]
     return options
+
+@app.callback(
+    Output('graph', 'figure'),
+    Input("tower_id", "value"))
+def update_figure(tower_id):
+
+    fig = px.line(x=['2022.08.1', '2022.08.2', '2022.08.3', '2022.08.4'], y=[0, 10, 20, 50])
+
+    fig.update_layout(transition_duration=500)
+
+    return fig
 
 
 @server.route('/post_record', methods=['POST'])
