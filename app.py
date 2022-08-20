@@ -29,7 +29,7 @@ def create_layout():
         ],
         brand="Hydroponic",
         brand_href="/",
-        color="#008080",
+        color="#48a357",
         dark=True,
     )
     page = dbc.Container(
