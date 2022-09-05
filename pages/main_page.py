@@ -56,7 +56,25 @@ def create_main_page():
                                         ]
                                     )
                                 ]), body=True 
-                            )
+                            ), 
+                        ],
+                        md=3,
+                    ),
+                    dbc.Col(
+                        [
+                            dbc.Card(
+                                dbc.Col([
+                                    html.H2("Sensor info", className="display-6"),
+                                    html.Div(
+                                        id='sensor-info', 
+                                        children=[
+                                            html.P("Min WL: 0"),
+                                            html.P("Max WL: 1"),
+                                            html.P("Air Temp: 0.5"),
+                                        ]
+                                    )
+                                ]), body=True 
+                            ), 
                         ],
                         md=3,
                     )
