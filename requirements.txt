@@ -3,3 +3,4 @@ dash-player
 dash-bootstrap-components
 pony
 requests
+pandas
